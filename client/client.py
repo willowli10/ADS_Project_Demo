@@ -9,6 +9,12 @@ def main():
     count = remote.count_words("example")
     print(f"Count of 'example': {count}")
 
+    count = remote.count_words("example")
+    print(f"Count of 'example': {count}")
+
+    count = remote.count_words("words")
+    print(f"Count of 'words': {count}")
+
 
 if __name__ == "__main__":
     main()

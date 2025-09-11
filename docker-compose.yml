@@ -1,11 +1,20 @@
-version: "3.9"
-
 services:
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - rpyc-net
+    ports:
+      - "6379:6379"
+
   server:
     build: ./server
     container_name: rpyc_server
     networks:
       - rpyc-net
+    depends_on:
+      - redis
     ports:
       - "18861:18861"
 
