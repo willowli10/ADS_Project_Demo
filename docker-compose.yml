@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  server:
+    build: ./server
+    container_name: rpyc_server
+    networks:
+      - rpyc-net
+    ports:
+      - "18861:18861"
+
+  client:
+    build: ./client
+    container_name: rpyc_client
+    networks:
+      - rpyc-net
+    depends_on:
+      - server
+    command: ["python", "client.py"]
+
+networks:
+  rpyc-net:
+    driver: bridge
