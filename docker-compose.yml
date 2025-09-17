@@ -17,6 +17,12 @@ services:
       - redis
     ports:
       - "18861:18861"
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+    environment:
+      - DATA_DIR=/data
 
   client:
     build: ./client
