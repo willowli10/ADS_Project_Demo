@@ -1,20 +1,15 @@
 import rpyc
+import time
 
 def main():
     # connect to the RPyC server
     conn = rpyc.connect("rpyc_server", 18861)
     remote = conn.root
 
-    # submit task to count words
-    count = remote.count_words("example")
-    print(f"Count of 'example': {count}")
-
-    count = remote.count_words("example")
-    print(f"Count of 'example': {count}")
-
-    count = remote.count_words("words")
-    print(f"Count of 'words': {count}")
-
+    for word in ("example", "words"):
+        start = time.time()
+        count = remote.count_words(word)
+        print(f"Count of '{word}': {count}, latency: {(time.time() - start) * 1000} ms")
 
 if __name__ == "__main__":
     main()
