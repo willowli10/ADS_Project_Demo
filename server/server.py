@@ -2,7 +2,7 @@ import rpyc
 from rpyc.utils.server import ThreadedServer
 import redis
 
-TEXT_FILE = "/data/data.txt"
+TEXT_FILE = "/data/dune.txt"
 
 # connect to Redis server
 r = redis.Redis(host="redis", port=6379, decode_responses=True)
