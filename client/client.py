@@ -1,15 +1,28 @@
+from time import time
 import rpyc
 import time
+import asyncio
 
-def main():
-    # connect to the RPyC server
-    conn = rpyc.connect("rpyc_server", 18861)
+async def main():
+    # connect to the load balancer
+    conn = rpyc.connect("load_balancer", 18861)
+    loop = asyncio.get_running_loop()
+
     remote = conn.root
 
-    for word in ("dune", "sand", "banana"):
-        start = time.time()
-        count = remote.count_words(word)
-        print(f"Count of '{word}': {count}, latency: {(time.time() - start) * 1000} ms")
+    try:
+        while True:
+            # read input words
+            word = await loop.run_in_executor(None, input, "Input: ")
+            if word.lower() == "exit":
+                break
+
+            # call remote method in a thread to avoid blocking the event loop
+            result = await asyncio.to_thread(lambda: remote.count_words(word))
+            print("Result:", result)
+    finally:
+        conn.close()
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

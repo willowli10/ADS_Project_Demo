@@ -8,15 +8,60 @@ services:
     ports:
       - "6379:6379"
 
-  server:
+  load_balancer:
     build: ./server
-    container_name: rpyc_server
+    container_name: load_balancer
+    command: ["python", "load_balancer.py"]
+    networks:
+      - rpyc-net
+    depends_on:
+      - server1
+      - server2
+      - server3
+      - redis
+    ports:
+      - "18861:18861"
+    environment:
+    - PYTHONUNBUFFERED=1
+
+  server1:
+    build: ./server
+    container_name: rpyc_server1
+    command: ["python", "server.py", "--id=1"]
     networks:
       - rpyc-net
     depends_on:
       - redis
-    ports:
-      - "18861:18861"
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+    environment:
+      - DATA_DIR=/data
+
+  server2:
+    build: ./server
+    container_name: rpyc_server2
+    command: ["python", "server.py", "--id=2"]
+    networks:
+      - rpyc-net
+    depends_on:
+      - redis
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+    environment:
+      - DATA_DIR=/data
+
+  server3:
+    build: ./server
+    container_name: rpyc_server3
+    command: ["python", "server.py", "--id=3"]
+    networks:
+      - rpyc-net
+    depends_on:
+      - redis
     volumes:
       - type: bind
         source: ./data
@@ -30,8 +75,10 @@ services:
     networks:
       - rpyc-net
     depends_on:
-      - server
-    command: ["python", "client.py"]
+      - load_balancer
+    stdin_open: true
+    tty: true
+    command: ["bash"]
 
 networks:
   rpyc-net:
