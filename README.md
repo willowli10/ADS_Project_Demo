@@ -19,6 +19,8 @@
 - Start the client: 
     - `docker exec -it rpyc_client bash`
     - `python client.py`
+      - Append `--mode=interactive` for interactive per-word input and response
+      - Append `--mode=benchmark` for benchmarking over a list of pre-determined words
 
 ![alt text](image-1.png)
 
