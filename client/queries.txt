@@ -1,8 +1,0 @@
-sand
-dune
-water
-worm
-baron
-banana
-knife
-exit

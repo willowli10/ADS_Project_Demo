@@ -29,3 +29,14 @@
 ![alt text](image-2.png)
 
 - Shutdown the server and clean redis cache: `docker-compose down -v`
+
+## Results
+
+- With LB: 
+  - 100 words: 0.10787582900957204
+  - 1000 words: 0.7806310659943847
+  - 10000 words: 7.98753046899219
+- Without LB:
+  - 100 words: 0.13388813399069477
+  - 1000 words: 1.1490419009933248
+  - 10000 words: 10.689208071999019
