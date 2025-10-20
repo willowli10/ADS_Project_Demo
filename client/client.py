@@ -67,8 +67,13 @@ async def main(bench: bool):
             # Dispatch all RPCs in parallel; each uses its own connection.
             start = perf_counter()
             results = await asyncio.gather(
-                *[asyncio.to_thread(_call_count_words, q) for q in query_list]
+                *[asyncio.to_thread(_call_count_words, q) for q in query_list],
+                return_exceptions=True
             )
+            ok = sum(1 for r in results if not isinstance(r, Exception))
+            fail = len(results) - ok
+            print(f"[CL] Completed {ok} ok / {fail} failed for {case} words")
+
             end = perf_counter()
             # for word, count in zip(query_list, results):
             #     print(f"Result: {word} -> {count}")
