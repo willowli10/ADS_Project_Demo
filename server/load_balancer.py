@@ -8,21 +8,31 @@ servers = [
     ("server3", 18864),
 ]
 
-# Load Balancing Strategy 1: Least Connections
-# active_connections = {i: 0 for i in range(len(servers))}
-# def choose_server():
-#     return min(active_connections, key=lambda i: active_connections[i])
+# Load Balancing Strategy 1: Round Robin
+class RoundRobin:
+    def __init__(self):
+        self.index = 0
 
-# Load Balancing Strategy 2: Round Robin
-current_index = -1
-lock = threading.Lock()
+    def getServer(self):
+        host, port = servers[self.index]
+        self.index = (self.index + 1) % len(servers)
+        return host, port
+    
+# Load Balancing Strategy 2: Weighted Round Robin
+server_weights = [3, 2, 1]
+class WeightedRoundRobin:
+    def __init__(self):
+        self.index = 0
+        for server, weight in zip(servers, server_weights):
+            self.expanded_servers.extend([server] * weight)
 
-def choose_server():
-    global current_index
-    with lock:
-        current_index = (current_index + 1) % len(servers)
-    return current_index
+    def getServer(self):
+        host, port = self.expanded_servers[self.index]
+        self.index = (self.index + 1) % len(self.expanded_servers)
+        return host, port
 
+current_algo = RoundRobin()
+# current_algo = WeightedRoundRobin()
 
 async def _pipe_stream(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     """Continuously forward bytes from reader to writer until EOF or error."""
@@ -57,11 +67,7 @@ async def _handle_client(client_reader: asyncio.StreamReader, client_writer: asy
     peer = client_writer.get_extra_info("peername")
 
     # Choose backend according to the balancing strategy
-    idx = choose_server()
-    host, port = servers[idx]
-
-    # Load Balancing Strategy 1: Least Connections
-    # active_connections[idx] += 1
+    host, port = current_algo.getServer()
 
     try:
         server_reader, server_writer = await asyncio.open_connection(host, port)
@@ -89,9 +95,6 @@ async def _handle_client(client_reader: asyncio.StreamReader, client_writer: asy
             await task
         except Exception:
             pass
-
-    # Load Balancing Strategy 1: Least Connections
-    # active_connections[idx] -= 1
 
     print(f"[LB] Closed {peer} ↔ {host}:{port}", flush=True)
 
