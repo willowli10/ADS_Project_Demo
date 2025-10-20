@@ -9,19 +9,18 @@ servers = [
 ]
 
 # Load Balancing Strategy 1: Least Connections
-# active_connections = {i: 0 for i in range(len(servers))}
-# def choose_server():
-#     return min(active_connections, key=lambda i: active_connections[i])
+active_connections = {i: 0 for i in range(len(servers))}
+def choose_server():
+    return min(active_connections, key=lambda i: active_connections[i])
 
 # Load Balancing Strategy 2: Round Robin
-current_index = -1
-lock = threading.Lock()
-
-def choose_server():
-    global current_index
-    with lock:
-        current_index = (current_index + 1) % len(servers)
-    return current_index
+# current_index = -1
+# lock = threading.Lock()
+# def choose_server():
+#     global current_index
+#     with lock:
+#         current_index = (current_index + 1) % len(servers)
+#     return current_index
 
 
 async def _pipe_stream(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
@@ -61,7 +60,7 @@ async def _handle_client(client_reader: asyncio.StreamReader, client_writer: asy
     host, port = servers[idx]
 
     # Load Balancing Strategy 1: Least Connections
-    # active_connections[idx] += 1
+    active_connections[idx] += 1
 
     try:
         server_reader, server_writer = await asyncio.open_connection(host, port)
@@ -91,7 +90,7 @@ async def _handle_client(client_reader: asyncio.StreamReader, client_writer: asy
             pass
 
     # Load Balancing Strategy 1: Least Connections
-    # active_connections[idx] -= 1
+    active_connections[idx] -= 1
 
     print(f"[LB] Closed {peer} ↔ {host}:{port}", flush=True)
 

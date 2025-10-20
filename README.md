@@ -32,10 +32,14 @@
 
 ## Results
 
-- With LB: 
+- With Round-Robin LB: 
   - 100 words: 0.10787582900957204
   - 1000 words: 0.7806310659943847
   - 10000 words: 7.98753046899219
+- With Least Connections LB:
+  - 100 words: 0.11729527199997847
+  - 1000 words: 0.747875471000043
+  - 10000 words: 7.477705518999983
 - Without LB:
   - 100 words: 0.13388813399069477
   - 1000 words: 1.1490419009933248
