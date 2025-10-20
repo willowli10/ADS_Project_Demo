@@ -1,14 +1,30 @@
-from time import time
+from time import sleep
 import rpyc
 from time import perf_counter
 import asyncio
 import sys
+import socket
+
+RETRIES = 3
+BACKOFF = 0.5  # seconds
+socket.setdefaulttimeout(1.0)
+
 
 # Use LB
-def _call_count_words(keyword: str) -> int:
-    # Open a fresh connection per request so the LB can round-robin
-    with rpyc.connect("load_balancer", 18861) as conn:
-        return conn.root.count_words(keyword)
+def _call_count_words(keyword: str):
+    for attempt in range(RETRIES):
+        try:
+            # timeout -> LB or server is unreachable
+            with rpyc.connect("load_balancer", 18861) as conn:
+                return conn.root.count_words(keyword)
+        except (EOFError, ConnectionResetError, ConnectionRefusedError,
+                socket.timeout, OSError) as e:
+            if attempt < RETRIES - 1:
+                sleep(BACKOFF * (2 ** attempt))
+                continue
+            # Final attempt failed
+            raise
+
 
 # Directly to server
 # def _call_count_words(keyword: str) -> int:
