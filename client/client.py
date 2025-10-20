@@ -43,8 +43,13 @@ async def main(bench: bool):
                 break
             
             # Each request uses a new connection (enables LB round-robin)
-            result = await asyncio.to_thread(_call_count_words, word)
-            print("Result:", result)
+            try:
+                result = await asyncio.to_thread(_call_count_words, word)
+                print("Result:", result)
+            except Exception as e:
+                print("[CL] No backend available (or connection failed):", e)
+                # keep looping so the user can try again after servers recover
+                continue
     
     # Benchmark mode       
     else:
