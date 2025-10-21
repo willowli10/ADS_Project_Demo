@@ -23,6 +23,7 @@ server_weights = [3, 2, 1]
 class WeightedRoundRobin:
     def __init__(self):
         self.index = 0
+        self.expanded_servers = []
         for server, weight in zip(servers, server_weights):
             self.expanded_servers.extend([server] * weight)
 
@@ -31,8 +32,8 @@ class WeightedRoundRobin:
         self.index = (self.index + 1) % len(self.expanded_servers)
         return host, port
 
-current_algo = RoundRobin()
-# current_algo = WeightedRoundRobin()
+# current_algo = RoundRobin()
+current_algo = WeightedRoundRobin()
 
 async def _pipe_stream(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     """Continuously forward bytes from reader to writer until EOF or error."""
