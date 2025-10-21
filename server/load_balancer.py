@@ -62,8 +62,8 @@ class WeightedRoundRobin:
         self.index = (self.index + 1) % len(self.expanded_servers)  # Advance index
         return host, port
 
-current_algo = RoundRobin()
-# current_algo = WeightedRoundRobin()
+# current_algo = RoundRobin()
+current_algo = WeightedRoundRobin()
 
 async def _pipe_stream(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     """Continuously forward bytes from reader to writer until EOF or error."""
