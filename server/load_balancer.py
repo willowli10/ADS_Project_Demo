@@ -32,10 +32,12 @@ class RoundRobin:
     def getServer(self):
         pool = healthy_servers()
         if not pool:
+            print("[LB] RR: No healthy servers")
             return None
         self.index %= len(pool)
         host, port = pool[self.index]
         self.index = (self.index + 1) % len(pool)
+        print(f"[LB] RR: Selecting server {host}:{port}")
         return host, port
     
 # Load Balancing Strategy 2: Weighted Round Robin
@@ -56,10 +58,12 @@ class WeightedRoundRobin:
         # Rebuild each time in case health changed
         self._rebuild()
         if not self.expanded_servers:
+            print("[LB] WRR: No healthy servers")
             return None
         self.index %= len(self.expanded_servers)    # Ensure index is in range
         host, port = self.expanded_servers[self.index]  # Select server
         self.index = (self.index + 1) % len(self.expanded_servers)  # Advance index
+        print(f"[LB] WRR: Selecting server {host}:{port}")
         return host, port
 
 # current_algo = RoundRobin()

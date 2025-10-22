@@ -12,37 +12,41 @@ socket.setdefaulttimeout(1.0)
 
 
 # Use LB
-# def _call_count_words(keyword: str):
-#     for attempt in range(RETRIES):
-#         try:
-#             # timeout -> LB or server is unreachable
-#             with rpyc.connect("load_balancer", 18861) as conn:
-#                 return conn.root.count_words(keyword)
-#         except (EOFError, ConnectionResetError, ConnectionRefusedError,
-#                 socket.timeout, OSError) as e:
-#             if attempt < RETRIES - 1:
-#                 sleep(BACKOFF * (2 ** attempt))
-#                 continue
-#             # Final attempt failed
-#             raise
+def _call_count_words_lb(keyword: str):
+    for attempt in range(RETRIES):
+        try:
+            # timeout -> LB or server is unreachable
+            with rpyc.connect("load_balancer", 18861) as conn:
+                return conn.root.count_words(keyword)
+        except (EOFError, ConnectionResetError, ConnectionRefusedError,
+                socket.timeout, OSError) as e:
+            if attempt < RETRIES - 1:
+                sleep(BACKOFF * (2 ** attempt))
+                continue
+            # Final attempt failed
+            raise
 
 
 # Directly to server
-def _call_count_words(keyword: str) -> int:
+def _call_count_words_server(keyword: str) -> int:
     with rpyc.connect("rpyc_server1", 18862) as conn:
         return conn.root.count_words(keyword)
     
     
-async def _timed_query(word: str):
+# Timed wrapper for _call_count_words
+async def _timed_query(word: str, use_lb: bool):
     start = perf_counter()
     try:
-        result = await asyncio.to_thread(_call_count_words, word)
+        if use_lb:
+            result = await asyncio.to_thread(_call_count_words_lb, word)
+        else:
+            result = await asyncio.to_thread(_call_count_words_server, word)
         return word, result, perf_counter() - start, None
     except Exception as exc:
         return word, None, perf_counter() - start, exc
     
 
-async def main(bench: bool):
+async def main(bench: bool, lb: bool):
     loop = asyncio.get_running_loop()
 
     # Interactive mode
@@ -56,7 +60,10 @@ async def main(bench: bool):
             # Each request uses a new connection (enables LB round-robin)
             try:
                 start = perf_counter()
-                result = await asyncio.to_thread(_call_count_words, word)
+                if lb:
+                    result = await asyncio.to_thread(_call_count_words_lb, word)
+                else:
+                    result = await asyncio.to_thread(_call_count_words_server, word)
                 print(f"Result: {result}, took {perf_counter()-start}")
             except Exception as e:
                 print("[CL] No backend available (or connection failed):", e)
@@ -79,7 +86,7 @@ async def main(bench: bool):
             # Dispatch all RPCs in parallel; each uses its own connection.
             start = perf_counter()
             combined = await asyncio.gather(
-                *(_timed_query(q) for q in query_list)
+                *(_timed_query(q, lb) for q in query_list)
             )
 
             results = [c[1] for c in combined if c[3] is None]
@@ -99,15 +106,18 @@ async def main(bench: bool):
             
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv if a.startswith("--mode=")]
-    if len(args) != 1:
+    mode_arg = [a for a in sys.argv if a.startswith("--mode=")]
+    lb_arg = "--lb" in sys.argv
+    if len(mode_arg) != 1:
         raise RuntimeError("Exactly one mode should be specified")
-    mode_name = args[0].split("=")[1]
+    mode_name = mode_arg[0].split("=")[1]
     
     if (mode_name == "interactive"):
-        asyncio.run(main(bench=False))
+        print(f"[CL] Starting client in interactive mode, use LB = {lb_arg}")
+        asyncio.run(main(bench=False, lb=lb_arg))
     elif (mode_name == "benchmark"):
-        asyncio.run(main(bench=True))
+        print(f"[CL] Starting client in benchmark mode, use LB = {lb_arg}")
+        asyncio.run(main(bench=True, lb=lb_arg))
     else:
         raise RuntimeError("Only 'interactive' and 'benchmark' are permitted modes")
     
