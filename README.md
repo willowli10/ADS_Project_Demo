@@ -36,6 +36,10 @@
   - 100 words: 0.11650241699999953
   - 1000 words: 0.748456376
   - 10000 words: 7.873617254000003
+- Tail Latency
+  - 99th percentile latency for 100 words: 0.11748515282932204
+  - 99th percentile latency for 1000 words: 1.116767824888084
+  - 99th percentile latency for 10000 words: 10.491353210017769
 - With Weighted RR LB:
   - 100 words: 0.11174599999999657
   - 1000 words: 0.8656924170000053
